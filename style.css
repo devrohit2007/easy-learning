@@ -540,3 +540,43 @@ body {
 .icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
 .icon-btn.listening { color: #f87171; border-color: #f87171; animation: pulse 1.2s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Prevent text overlap with toolbar icons */
+.textarea-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(to top, var(--surface) 40%, transparent);
+  pointer-events: none;
+  border-radius: 0 0 12px 12px;
+}
+.textarea-toolbar { z-index: 2; }
+
+/* Continue button alignment */
+.input-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* Symmetric level/language button rows */
+
+
+/* Side drawer */
+.nav { display: flex; align-items: center; gap: 12px; }
+.hamburger-btn { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; display: flex; align-items: center; }
+.side-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+.side-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: var(--surface); z-index: 101; padding: 20px; display: flex; flex-direction: column; gap: 8px; transform: translateX(0); transition: transform 0.25s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.3); }
+.side-drawer.hidden { transform: translateX(-100%); display: flex !important; visibility: hidden; }
+.drawer-close-btn { align-self: flex-end; background: none; border: none; color: var(--text-secondary); cursor: pointer; margin-bottom: 12px; }
+.side-drawer .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 12px; border-radius: 8px; background: none; border: none; color: var(--text-primary); font-size: 15px; cursor: pointer; } .side-drawer .drawer-close-btn { color: var(--text-primary); }
+.side-drawer .menu-item:hover { background: rgba(255,255,255,0.05); }
+
+/* Perfect level/language grid alignment */
+.difficulty-selector, .lang-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.difficulty-selector .lang-btn, .lang-selector .lang-btn { width: 100%; }
+.lang-selector { margin-bottom: 20px; }
+
+/* Fix LEVEL/LANGUAGE label width for perfect column alignment */
+.difficulty-selector, .lang-selector { display: flex; align-items: center; gap: 12px; }
+.difficulty-selector > span, .lang-selector > span { display: inline-block; width: 90px; flex-shrink: 0; }
+.difficulty-selector .lang-btn, .lang-selector .lang-btn { flex: 1; }
