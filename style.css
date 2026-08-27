@@ -517,3 +517,13 @@ body {
     animation: none !important;
   }
 }
+
+/* Fix level + language button independence */
+.difficulty-selector .lang-btn { opacity: 0.5; }
+.difficulty-selector .lang-btn.active { opacity: 1; font-weight: 600; }
+.lang-selector .lang-btn { opacity: 0.5; }
+.lang-selector .lang-btn.active { opacity: 1; font-weight: 600; }
+
+/* Symmetric mode buttons */
+.mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.mode-btn { width: 100%; }
