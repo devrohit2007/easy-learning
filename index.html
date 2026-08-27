@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Learn Your Way — Workspace</title>
+  <title>EasyLearning</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -14,7 +14,7 @@
 
   <!-- NAV -->
   <nav class="nav">
-    <a href="index.html" class="nav-logo">Learn Your Way</a>
+    <a href="index.html" class="nav-logo">EasyLearning</a>
     <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Menu">⋮</button>
     <div class="hamburger-menu hidden" id="hamburgerMenu">
       <button class="menu-item" id="historyBtn" type="button">
@@ -36,19 +36,27 @@
         <h1 class="ws-heading">What are you trying to understand?</h1>
         <p class="ws-sub">Paste any text — a definition, a paragraph, a concept.</p>
 
-        <textarea
-          id="materialInput"
-          class="material-input"
-          placeholder="Paste your learning material here..."
-          rows="6"
-          aria-label="Learning material input"
-        ></textarea>
+        <div class="textarea-wrapper">
+          <textarea
+            id="materialInput"
+            class="material-input"
+            placeholder="Paste your learning material here..."
+            rows="6"
+            aria-label="Learning material input"
+          ></textarea>
+          <div class="textarea-toolbar">
+            <button class="icon-btn" id="micBtn" type="button" aria-label="Voice input" title="Speak">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <button class="icon-btn" id="pdfBtn" type="button" aria-label="Upload PDF or image" title="Upload PDF or Image">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+            <input type="file" id="pdfUpload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none" />
+          </div>
+        </div>
 
         <p class="demo-hint">Not sure what to paste? <button class="demo-hint-btn" id="demoBtn" type="button">Try the built-in demo →</button></p>
         <div class="input-actions">
-          <button class="btn btn-ghost" id="micBtn" type="button">🎤 Speak</button>
-          <button class="btn btn-ghost" id="micBtn" type="button">🎤 Speak</button>
-          <button class="btn btn-ghost" id="pdfBtn" type="button">Upload PDF/Image</button><input type="file" id="pdfUpload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none" />
           <button class="btn btn-primary" id="continueBtn" type="button">
             Continue →
           </button>
@@ -254,6 +262,9 @@
                   <span class="rethink-icon">◳</span> Break it into steps
                 </button>
               </div>
+              <button class="btn btn-primary" id="goTeachBackBtn" type="button" style="margin-top:16px;">
+                Teach it back instead →
+              </button>
             </div>
           </div>
 

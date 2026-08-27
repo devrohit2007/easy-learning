@@ -70,6 +70,28 @@ Rules:
     return JSON.parse(clean);
   }
 
-  return { explain, generatePractice, generateQuiz, getKeyTerms };
+  async function evaluateTeachBack(original, userExplanation) {
+    const prompt = `You are evaluating a student's understanding of a concept.
+
+Original concept:
+${original}
+
+Student's explanation:
+${userExplanation}
+
+Score their explanation out of 10. Return ONLY a JSON object, no markdown:
+{
+  "score": 7,
+  "feedback": "You got the main idea but missed X...",
+  "missed": ["point 1", "point 2"],
+  "strong": ["point 1"]
+}`;
+    const raw = await callAPI(prompt, "steps");
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Invalid response");
+    return JSON.parse(match[0]);
+  }
+
+  return { explain, generatePractice, generateQuiz, getKeyTerms, evaluateTeachBack };
 
 })();

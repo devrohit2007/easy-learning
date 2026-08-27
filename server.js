@@ -28,7 +28,7 @@ app.post("/api/chat", async (req, res) => {
     } else {
       const r = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.NVIDIA_API_KEY}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.NVIDIA_NEMOTRON_KEY}` },
         body: JSON.stringify({ model: "nvidia/nemotron-3-ultra-550b-a55b", messages, max_tokens: 800, temperature: 0.7 })
       });
       const d = await r.json();
@@ -47,9 +47,9 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     const mimeType = file.mimetype;
     const r = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.NVIDIA_API_KEY}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.NVIDIA_VISION_KEY}` },
       body: JSON.stringify({
-        model: "nvidia/llama-3.2-90b-vision-instruct",
+        model: "meta/llama-3.2-11b-vision-instruct",
         messages: [{ role: "user", content: [
           { type: "text", text: "Extract and return all the text from this image or document. Return only the text, no commentary." },
           { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } }
@@ -57,7 +57,9 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
         max_tokens: 1000
       })
     });
-    const d = await r.json();
+    const raw = await r.text();
+    console.log("NVIDIA raw response:", raw.slice(0, 500));
+    const d = JSON.parse(raw);
     const text = d.choices?.[0]?.message?.content || "";
     res.json({ text });
   } catch (err) {

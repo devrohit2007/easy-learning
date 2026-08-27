@@ -1,4 +1,4 @@
-// app.js — Learn Your Way workspace logic
+// app.js — EasyLearning workspace logic
 
 (() => {
 
@@ -57,7 +57,7 @@
   const explanationSection = document.getElementById('explanationSection');
   const practiceSection    = document.getElementById('practiceSection');
   const quizSection        = document.getElementById('quizSection');
-  const ALL_SECTIONS = [inputSection, modeSection, explanationSection, practiceSection, quizSection, teachSection];
+  const ALL_SECTIONS = [inputSection, modeSection, explanationSection, practiceSection, quizSection];
 
   const materialInput   = document.getElementById('materialInput');
   const materialPreview = document.getElementById('materialPreview');
@@ -467,7 +467,8 @@
       '<div class="quiz-score-grade">'  + grade   + '</div>' +
       '<div class="quiz-score-msg">'    + msg      + '</div>';
     quizResults.classList.remove('hidden');
-    maybeShowTeachBack(correct, total);
+    window.lastQuizScore = correct;
+    window.lastQuizTotal = total;
     if (correct < total) {
       quizRethink.classList.remove('hidden');
     } else {
@@ -663,8 +664,71 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-})();
 
+  // Teach it Back
+  const teachSection = document.getElementById('teachSection');
+  ALL_SECTIONS.push(teachSection);
+  const teachInput = document.getElementById('teachInput');
+  const teachSubmitBtn = document.getElementById('teachSubmitBtn');
+  const teachLoading = document.getElementById('teachLoading');
+  const teachResult = document.getElementById('teachResult');
+  const teachNav = document.getElementById('teachNav');
+  const teachDoneBtn = document.getElementById('teachDoneBtn');
+
+  document.getElementById('goTeachBackBtn').addEventListener('click', () => {
+    ALL_SECTIONS.forEach(s => s.classList.add('hidden'));
+    teachSection.classList.remove('hidden');
+    teachInput.value = '';
+    teachResult.classList.add('hidden');
+    teachNav.classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  function maybeShowTeachBack(score, total) {
+    if (score / total < 0.75) {
+      ALL_SECTIONS.forEach(s => s.classList.add('hidden'));
+      teachSection.classList.remove('hidden');
+      teachInput.value = '';
+      teachResult.classList.add('hidden');
+      teachNav.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  teachSubmitBtn.addEventListener('click', async () => {
+    const text = teachInput.value.trim();
+    if (!text) { teachInput.focus(); return; }
+    teachSubmitBtn.disabled = true;
+    teachLoading.classList.remove('hidden');
+    teachResult.classList.add('hidden');
+    try {
+      const result = await AI.evaluateTeachBack(currentMaterial, text);
+      teachLoading.classList.add('hidden');
+      const color = result.score >= 7 ? '#4ade80' : result.score >= 5 ? '#facc15' : '#f87171';
+      teachResult.innerHTML = `
+        <div style="text-align:center; margin-bottom:16px;">
+          <div style="font-size:48px; font-weight:700; color:${color}">${result.score}/10</div>
+          <p style="color:var(--text-secondary)">${result.feedback}</p>
+        </div>
+        ${result.strong && result.strong.length ? `<p style="color:#4ade80">Strong: ${result.strong.join(', ')}</p>` : ''}
+        ${result.missed && result.missed.length ? `<p style="color:#f87171">Missed: ${result.missed.join(', ')}</p>` : ''}
+      `;
+      teachResult.classList.remove('hidden');
+      teachNav.classList.remove('hidden');
+    } catch (err) {
+      teachLoading.classList.add('hidden');
+      teachResult.innerHTML = `<p style="color:#f87171">Error: ${err.message}</p>`;
+      teachResult.classList.remove('hidden');
+    }
+    teachSubmitBtn.disabled = false;
+  });
+
+  teachDoneBtn.addEventListener('click', () => {
+    showSection(inputSection);
+    materialInput.value = '';
+  });
+
+})();
 // Voice Input
 const micBtn = document.getElementById('micBtn');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -676,7 +740,7 @@ if (SpeechRecognition) {
   recognition.interimResults = false;
 
   micBtn.addEventListener('click', () => {
-    micBtn.textContent = '🔴 Listening...';
+    micBtn.classList.add('listening');
     micBtn.disabled = true;
     recognition.start();
   });
@@ -684,73 +748,17 @@ if (SpeechRecognition) {
   recognition.onresult = (e) => {
     const transcript = e.results[0][0].transcript;
     document.getElementById('materialInput').value = transcript;
-    micBtn.textContent = '🎤 Speak';
-    micBtn.disabled = false;
   };
 
   recognition.onerror = () => {
-    micBtn.textContent = '🎤 Speak';
+    micBtn.classList.remove('listening');
     micBtn.disabled = false;
   };
 
   recognition.onend = () => {
-    micBtn.textContent = '🎤 Speak';
+    micBtn.classList.remove('listening');
     micBtn.disabled = false;
   };
 } else {
   micBtn.style.display = 'none';
 }
-
-// Teach it Back
-const teachSection = document.getElementById('teachSection');
-const teachInput = document.getElementById('teachInput');
-const teachSubmitBtn = document.getElementById('teachSubmitBtn');
-const teachLoading = document.getElementById('teachLoading');
-const teachResult = document.getElementById('teachResult');
-const teachNav = document.getElementById('teachNav');
-const teachDoneBtn = document.getElementById('teachDoneBtn');
-
-// Show Teach it Back after quiz if score < 75%
-function maybeShowTeachBack(score, total) {
-  if (score / total < 0.75) {
-    ALL_SECTIONS.forEach(s => s.classList.add('hidden'));
-    teachSection.classList.remove('hidden');
-    teachInput.value = '';
-    teachResult.classList.add('hidden');
-    teachNav.classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-}
-
-teachSubmitBtn.addEventListener('click', async () => {
-  const text = teachInput.value.trim();
-  if (!text) { teachInput.focus(); return; }
-  teachSubmitBtn.disabled = true;
-  teachLoading.classList.remove('hidden');
-  teachResult.classList.add('hidden');
-  try {
-    const result = await AI.evaluateTeachBack(currentMaterial, text);
-    teachLoading.classList.add('hidden');
-    const color = result.score >= 7 ? '#4ade80' : result.score >= 5 ? '#facc15' : '#f87171';
-    teachResult.innerHTML = `
-      <div style="text-align:center; margin-bottom:16px;">
-        <div style="font-size:48px; font-weight:700; color:${color}">${result.score}/10</div>
-        <p style="color:var(--text-secondary)">${result.feedback}</p>
-      </div>
-      ${result.strong?.length ? `<p style="color:#4ade80">✓ Strong: ${result.strong.join(', ')}</p>` : ''}
-      ${result.missed?.length ? `<p style="color:#f87171">✗ Missed: ${result.missed.join(', ')}</p>` : ''}
-    `;
-    teachResult.classList.remove('hidden');
-    teachNav.classList.remove('hidden');
-  } catch (err) {
-    teachLoading.classList.add('hidden');
-    teachResult.innerHTML = `<p style="color:#f87171">Error: ${err.message}</p>`;
-    teachResult.classList.remove('hidden');
-  }
-  teachSubmitBtn.disabled = false;
-});
-
-teachDoneBtn.addEventListener('click', () => {
-  showSection(inputSection);
-  materialInput.value = '';
-});

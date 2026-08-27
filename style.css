@@ -531,3 +531,12 @@ body {
 /* Button active state fix */
 .lang-btn { border: 1px solid rgba(255,255,255,0.2); border-radius: 99px; padding: 6px 16px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 14px; transition: all 0.2s; }
 .lang-btn.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); font-weight: 600; }
+
+/* Textarea inline toolbar */
+.textarea-wrapper { position: relative; }
+.textarea-wrapper .material-input { padding-bottom: 52px; }
+.textarea-toolbar { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 8px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.icon-btn.listening { color: #f87171; border-color: #f87171; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
