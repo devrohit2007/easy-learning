@@ -42,11 +42,12 @@ Rules:
     return data.content;
   }
 
-  async function explain(text, mode, lang = "English") {
+  async function explain(text, mode, lang = "English", diff = "normal") {
     const prompt = MODE_PROMPTS[mode];
     if (!prompt) throw new Error('Unknown mode: ' + mode);
+    const diffNote = diff === "kid" ? "\n\nAudience: Explain like the person is 10 years old. Use very simple words and fun examples." : diff === "expert" ? "\n\nAudience: The person is an expert. Use technical terms, be precise, skip basic explanations." : "";
     const langNote = lang !== "English" ? `\n\nIMPORTANT: Respond entirely in ${lang}. Do not use English except for technical terms that have no translation.` : "";
-    return await callAPI(prompt(text) + langNote, mode);
+    return await callAPI(prompt(text) + diffNote + langNote, mode);
   }
 
   async function generatePractice(text, mode) {

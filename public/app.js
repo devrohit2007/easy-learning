@@ -49,6 +49,7 @@
   let quizAnswers            = [];
   let isDemo                 = false;
   let currentLang            = "English";
+  let currentDiff            = "normal";
 
   // Elements
   const inputSection       = document.getElementById('inputSection');
@@ -174,6 +175,14 @@
     });
   });
 
+  document.querySelectorAll("[data-diff]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-diff]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentDiff = btn.dataset.diff;
+    });
+  });
+
   backToInputBtn.addEventListener('click', () => showSection(inputSection));
 
   // Step 2: Mode
@@ -201,7 +210,7 @@
         renderExplanation(DEMO_EXPLANATIONS[currentLang][mode], mode);
       } else {
         loadingText.textContent = 'Understanding your material...';
-        const raw = await AI.explain(currentMaterial, mode, currentLang);
+        const raw = await AI.explain(currentMaterial, mode, currentLang, currentDiff);
         renderAIExplanation(raw, mode);
       }
     } catch (err) {
