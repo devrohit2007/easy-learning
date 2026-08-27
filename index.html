@@ -46,6 +46,8 @@
 
         <p class="demo-hint">Not sure what to paste? <button class="demo-hint-btn" id="demoBtn" type="button">Try the built-in demo →</button></p>
         <div class="input-actions">
+          <button class="btn btn-ghost" id="micBtn" type="button">🎤 Speak</button>
+          <button class="btn btn-ghost" id="micBtn" type="button">🎤 Speak</button>
           <button class="btn btn-ghost" id="pdfBtn" type="button">Upload PDF/Image</button><input type="file" id="pdfUpload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none" />
           <button class="btn btn-primary" id="continueBtn" type="button">
             Continue →
@@ -270,6 +272,25 @@
       </div>
     </section>
 
+    <!-- TEACH IT BACK -->
+    <section class="ws-section hidden" id="teachSection">
+      <div class="ws-container">
+        <h2 class="ws-heading-sm">Teach it Back</h2>
+        <p class="ws-sub-sm">Explain the concept in your own words. AI will score how well you understood it.</p>
+        <textarea id="teachInput" class="material-input" placeholder="Explain it like you are teaching someone else..." rows="6"></textarea>
+        <div class="input-actions">
+          <button class="btn btn-primary" id="teachSubmitBtn" type="button">Submit →</button>
+        </div>
+        <div class="loading-state hidden" id="teachLoading">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          <p class="loading-text">Evaluating your explanation...</p>
+        </div>
+        <div class="teach-result hidden" id="teachResult"></div>
+        <div class="practice-nav hidden" id="teachNav">
+          <button class="btn btn-primary" id="teachDoneBtn" type="button">Start over</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="history-panel hidden" id="historyPanel">

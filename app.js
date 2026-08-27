@@ -57,7 +57,7 @@
   const explanationSection = document.getElementById('explanationSection');
   const practiceSection    = document.getElementById('practiceSection');
   const quizSection        = document.getElementById('quizSection');
-  const ALL_SECTIONS = [inputSection, modeSection, explanationSection, practiceSection, quizSection];
+  const ALL_SECTIONS = [inputSection, modeSection, explanationSection, practiceSection, quizSection, teachSection];
 
   const materialInput   = document.getElementById('materialInput');
   const materialPreview = document.getElementById('materialPreview');
@@ -167,17 +167,17 @@
     showSection(modeSection);
   });
 
-  document.querySelectorAll(".lang-btn").forEach(btn => {
+  document.querySelectorAll(".lang-selector .lang-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".lang-selector .lang-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentLang = btn.dataset.lang;
     });
   });
 
-  document.querySelectorAll("[data-diff]").forEach(btn => {
+  document.querySelectorAll(".difficulty-selector .lang-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("[data-diff]").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".difficulty-selector .lang-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentDiff = btn.dataset.diff;
     });
@@ -467,6 +467,7 @@
       '<div class="quiz-score-grade">'  + grade   + '</div>' +
       '<div class="quiz-score-msg">'    + msg      + '</div>';
     quizResults.classList.remove('hidden');
+    maybeShowTeachBack(correct, total);
     if (correct < total) {
       quizRethink.classList.remove('hidden');
     } else {
@@ -663,3 +664,93 @@
   }
 
 })();
+
+// Voice Input
+const micBtn = document.getElementById('micBtn');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  micBtn.addEventListener('click', () => {
+    micBtn.textContent = '🔴 Listening...';
+    micBtn.disabled = true;
+    recognition.start();
+  });
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('materialInput').value = transcript;
+    micBtn.textContent = '🎤 Speak';
+    micBtn.disabled = false;
+  };
+
+  recognition.onerror = () => {
+    micBtn.textContent = '🎤 Speak';
+    micBtn.disabled = false;
+  };
+
+  recognition.onend = () => {
+    micBtn.textContent = '🎤 Speak';
+    micBtn.disabled = false;
+  };
+} else {
+  micBtn.style.display = 'none';
+}
+
+// Teach it Back
+const teachSection = document.getElementById('teachSection');
+const teachInput = document.getElementById('teachInput');
+const teachSubmitBtn = document.getElementById('teachSubmitBtn');
+const teachLoading = document.getElementById('teachLoading');
+const teachResult = document.getElementById('teachResult');
+const teachNav = document.getElementById('teachNav');
+const teachDoneBtn = document.getElementById('teachDoneBtn');
+
+// Show Teach it Back after quiz if score < 75%
+function maybeShowTeachBack(score, total) {
+  if (score / total < 0.75) {
+    ALL_SECTIONS.forEach(s => s.classList.add('hidden'));
+    teachSection.classList.remove('hidden');
+    teachInput.value = '';
+    teachResult.classList.add('hidden');
+    teachNav.classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+teachSubmitBtn.addEventListener('click', async () => {
+  const text = teachInput.value.trim();
+  if (!text) { teachInput.focus(); return; }
+  teachSubmitBtn.disabled = true;
+  teachLoading.classList.remove('hidden');
+  teachResult.classList.add('hidden');
+  try {
+    const result = await AI.evaluateTeachBack(currentMaterial, text);
+    teachLoading.classList.add('hidden');
+    const color = result.score >= 7 ? '#4ade80' : result.score >= 5 ? '#facc15' : '#f87171';
+    teachResult.innerHTML = `
+      <div style="text-align:center; margin-bottom:16px;">
+        <div style="font-size:48px; font-weight:700; color:${color}">${result.score}/10</div>
+        <p style="color:var(--text-secondary)">${result.feedback}</p>
+      </div>
+      ${result.strong?.length ? `<p style="color:#4ade80">✓ Strong: ${result.strong.join(', ')}</p>` : ''}
+      ${result.missed?.length ? `<p style="color:#f87171">✗ Missed: ${result.missed.join(', ')}</p>` : ''}
+    `;
+    teachResult.classList.remove('hidden');
+    teachNav.classList.remove('hidden');
+  } catch (err) {
+    teachLoading.classList.add('hidden');
+    teachResult.innerHTML = `<p style="color:#f87171">Error: ${err.message}</p>`;
+    teachResult.classList.remove('hidden');
+  }
+  teachSubmitBtn.disabled = false;
+});
+
+teachDoneBtn.addEventListener('click', () => {
+  showSection(inputSection);
+  materialInput.value = '';
+});
