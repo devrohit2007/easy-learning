@@ -527,3 +527,7 @@ body {
 /* Symmetric mode buttons */
 .mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 .mode-btn { width: 100%; }
+
+/* Button active state fix */
+.lang-btn { border: 1px solid rgba(255,255,255,0.2); border-radius: 99px; padding: 6px 16px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.lang-btn.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); font-weight: 600; }
