@@ -1,12 +1,13 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const multer = require("multer");
+const path = require("path");
 dotenv.config();
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 app.use(express.json({ limit: "10mb" }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
 app.post("/api/chat", async (req, res) => {
   const { messages, mode } = req.body;
@@ -64,5 +65,6 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   }
 });
 
+module.exports = app;
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`EasyLearning running on http://localhost:${PORT}`));
+if (require.main === module) app.listen(PORT, () => console.log(`EasyLearning running on http://localhost:${PORT}`));
