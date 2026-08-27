@@ -1,11 +1,5 @@
 const AI = (() => {
 
-  const CONFIG = {
-    API_KEY: 'YOUR_NVIDIA_API_KEY_HERE',
-    MODEL: 'nvidia/nemotron-3-ultra-550b-a55b',
-    MAX_TOKENS: 800
-  };
-
   const SYSTEM_PROMPT = `You are an adaptive learning assistant. Your only job is to explain concepts in different ways until the learner understands.
 
 Rules:
@@ -21,32 +15,28 @@ Rules:
     steps: (text) => `Break down the following concept into clear sequential steps. Number each step. Each step should be one sentence. Maximum 6 steps.\n\nConcept: ${text}`
   };
 
-  const PRACTICE_PROMPT = (text, mode) => `Based on this concept, generate exactly 3 multiple-choice practice questions.\n\nConcept: ${text}\n\nReturn ONLY a JSON array, no markdown, no explanation:\n[\n  {\n    "question": "...",\n    "options": ["A", "B", "C", "D"],\n    "correct": 0,\n    "explanation": "..."\n  }\n]\n\ncorrect is the 0-based index of the right answer.`;
+  const PRACTICE_PROMPT = (text) => `Based on this concept, generate exactly 3 multiple-choice practice questions.\n\nConcept: ${text}\n\nReturn ONLY a JSON array, no markdown, no explanation:\n[\n  {\n    "question": "...",\n    "options": ["A", "B", "C", "D"],\n    "correct": 0,\n    "explanation": "..."\n  }\n]\n\ncorrect is the 0-based index of the right answer.`;
 
-  const HIGHLIGHT_PROMPT = (text) => `Read this explanation and identify 3 to 5 key terms that are most important to understand. Return ONLY a JSON array of the terms, no markdown, no explanation:
-["term1", "term2", "term3"]
+  const HIGHLIGHT_PROMPT = (text) => `Read this explanation and identify 3 to 5 key terms that are most important to understand. Return ONLY a JSON array of the terms, no markdown, no explanation:\n["term1", "term2", "term3"]\n\nExplanation: ${text}`;
 
-Explanation: ${text}`;
+  const QUIZ_PROMPT = (text) => `Based on this concept, generate exactly 4 multiple-choice quiz questions. These should be slightly harder than practice questions.\n\nConcept: ${text}\n\nReturn ONLY a JSON array, no markdown, no explanation:\n[\n  {\n    "question": "...",\n    "options": ["A", "B", "C", "D"],\n    "correct": 0,\n    "explanation": "..."\n  }\n]\n\ncorrect is the 0-based index of the right answer.`;
 
-  const QUIZ_PROMPT = (text, mode) => `Based on this concept, generate exactly 4 multiple-choice quiz questions. These should be slightly harder than practice questions.\n\nConcept: ${text}\n\nReturn ONLY a JSON array, no markdown, no explanation:\n[\n  {\n    "question": "...",\n    "options": ["A", "B", "C", "D"],\n    "correct": 0,\n    "explanation": "..."\n  }\n]\n\ncorrect is the 0-based index of the right answer.`;
-
-  async function callAPI(userMessage) {
+  async function callAPI(userMessage, mode = "steps") {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        mode,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userMessage }
         ]
       })
     });
-
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.error || 'Server error ' + response.status);
     }
-
     const data = await response.json();
     if (data.error) throw new Error(data.error);
     return data.content;
@@ -56,25 +46,25 @@ Explanation: ${text}`;
     const prompt = MODE_PROMPTS[mode];
     if (!prompt) throw new Error('Unknown mode: ' + mode);
     const langNote = lang !== "English" ? `\n\nIMPORTANT: Respond entirely in ${lang}. Do not use English except for technical terms that have no translation.` : "";
-    return await callAPI(prompt(text) + langNote);
+    return await callAPI(prompt(text) + langNote, mode);
   }
 
   async function generatePractice(text, mode) {
-    const raw = await callAPI(PRACTICE_PROMPT(text, mode));
+    const raw = await callAPI(PRACTICE_PROMPT(text), mode);
     const match = raw.match(/\[[\s\S]*\]/);
     if (!match) throw new Error('Invalid response');
     return JSON.parse(match[0]);
   }
 
   async function generateQuiz(text, mode) {
-    const raw = await callAPI(QUIZ_PROMPT(text, mode));
+    const raw = await callAPI(QUIZ_PROMPT(text), mode);
     const match = raw.match(/\[[\s\S]*\]/);
     if (!match) throw new Error('Invalid response');
     return JSON.parse(match[0]);
   }
 
   async function getKeyTerms(text) {
-    const raw = await callAPI(HIGHLIGHT_PROMPT(text));
+    const raw = await callAPI(HIGHLIGHT_PROMPT(text), "steps");
     const clean = raw.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
   }
