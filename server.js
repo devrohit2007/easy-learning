@@ -6,7 +6,7 @@ dotenv.config();
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 app.use(express.json({ limit: "10mb" }));
-app.use(express.static("public"));
+app.use(express.static("."));
 
 app.post("/api/chat", async (req, res) => {
   const { messages, mode } = req.body;
