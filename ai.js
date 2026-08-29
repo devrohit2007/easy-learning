@@ -50,15 +50,17 @@ Rules:
     return await callAPI(prompt(text) + diffNote + langNote, mode);
   }
 
-  async function generatePractice(text, mode) {
-    const raw = await callAPI(PRACTICE_PROMPT(text), mode);
+  async function generatePractice(text, mode, lang = "English") {
+    const langNote = lang !== "English" ? `\n\nIMPORTANT: Write the questions, options, and explanations entirely in ${lang}.` : "";
+    const raw = await callAPI(PRACTICE_PROMPT(text) + langNote, mode);
     const match = raw.match(/\[[\s\S]*\]/);
     if (!match) throw new Error('Invalid response');
     return JSON.parse(match[0]);
   }
 
-  async function generateQuiz(text, mode) {
-    const raw = await callAPI(QUIZ_PROMPT(text), mode);
+  async function generateQuiz(text, mode, lang = "English") {
+    const langNote = lang !== "English" ? `\n\nIMPORTANT: Write the questions, options, and explanations entirely in ${lang}.` : "";
+    const raw = await callAPI(QUIZ_PROMPT(text) + langNote, mode);
     const match = raw.match(/\[[\s\S]*\]/);
     if (!match) throw new Error('Invalid response');
     return JSON.parse(match[0]);
@@ -86,7 +88,7 @@ Score their explanation out of 10. Return ONLY a JSON object, no markdown:
   "missed": ["point 1", "point 2"],
   "strong": ["point 1"]
 }`;
-    const raw = await callAPI(prompt, "steps");
+    const raw = await callAPI(prompt, "simple");
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("Invalid response");
     return JSON.parse(match[0]);

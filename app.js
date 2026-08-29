@@ -390,7 +390,7 @@
         await delay(800);
         practiceData = DEMO_PRACTICE[currentLang];
       } else {
-        practiceData = await AI.generatePractice(currentMaterial, currentMode);
+        practiceData = await AI.generatePractice(currentMaterial, currentMode, currentLang);
       }
       renderQuestions(practiceData, practiceQuestions, practiceAnswers, () => {
         const ready = practiceAnswers.every(a => a !== null);
@@ -440,7 +440,7 @@
         await delay(900);
         quizData = DEMO_QUIZ[currentLang];
       } else {
-        quizData = await AI.generateQuiz(currentMaterial, currentMode);
+        quizData = await AI.generateQuiz(currentMaterial, currentMode, currentLang);
       }
       renderQuestions(quizData, quizQuestions, quizAnswers, () => {
         const ready = quizAnswers.every(a => a !== null);
