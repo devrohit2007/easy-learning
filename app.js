@@ -148,6 +148,13 @@
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = "";
+
+    const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      alert("This file is too large (" + (file.size / (1024*1024)).toFixed(1) + "MB). Please upload a file under 4MB, or try a shorter document / fewer pages.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     const isImage = /\.(jpe?g|png|webp)$/i.test(file.name);
@@ -155,13 +162,17 @@
     continueBtn.disabled = true;
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        if (res.status === 413) throw new Error("File too large for upload. Please try a smaller file.");
+        throw new Error("Server error (" + res.status + "). Please try again.");
+      }
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       materialInput.value = data.text;
       continueBtn.textContent = "Continue →";
       continueBtn.disabled = false;
     } catch (err) {
-      alert("PDF error: " + err.message);
+      alert("Upload error: " + err.message);
       continueBtn.textContent = "Continue →";
       continueBtn.disabled = false;
     }
