@@ -117,6 +117,32 @@ app.post("/api/define", async (req, res) => {
   }
 });
 
+app.get("/api/wikipedia", async (req, res) => {
+  const query = req.query.q;
+  if (!query) return res.status(400).json({ error: "Missing query" });
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+    const title = searchData.query?.search?.[0]?.title;
+    if (!title) return res.json({ found: false });
+
+    const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const summaryRes = await fetch(summaryUrl);
+    const summaryData = await summaryRes.json();
+
+    res.json({
+      found: true,
+      title: summaryData.title,
+      extract: summaryData.extract,
+      url: summaryData.content_urls?.desktop?.page,
+      thumbnail: summaryData.thumbnail?.source
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = app;
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {

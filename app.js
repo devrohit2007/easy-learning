@@ -845,6 +845,64 @@ document.addEventListener("click", (e) => {
     searchYoutube();
   }
 });
+
+// Wikipedia drawer button
+const wikiBtn = document.getElementById("wikipediaBtn");
+if (wikiBtn) wikiBtn.addEventListener("click", () => {
+  document.getElementById("wikipediaModal").classList.remove("hidden");
+  closeDrawer();
+});
+
+// Wikipedia contextual "Learn more" button
+document.addEventListener("click", (e) => {
+  if (e.target.id === "learnMoreBtn" || e.target.closest("#learnMoreBtn")) {
+    const materialEl = document.getElementById("materialInput");
+    const materialText = (materialEl && materialEl.value) ? materialEl.value : "";
+    const topic = materialText.split(".")[0].split(",")[0].slice(0, 60).trim();
+    document.getElementById("wikipediaQueryInput").value = topic;
+    document.getElementById("wikipediaModal").classList.remove("hidden");
+    searchWikipedia();
+  }
+});
+
+// Wikipedia search button + enter key
+document.addEventListener("click", (e) => {
+  if (e.target.id === "wikipediaSearchBtn" || e.target.closest("#wikipediaSearchBtn")) {
+    searchWikipedia();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.target.id === "wikipediaQueryInput" && e.key === "Enter") {
+    searchWikipedia();
+  }
+});
+
+async function searchWikipedia() {
+  const query = document.getElementById("wikipediaQueryInput").value.trim();
+  const resultsDiv = document.getElementById("wikipediaResults");
+  if (!query) return;
+  resultsDiv.innerHTML = '<div class="def-spinner"></div>';
+  try {
+    const res = await fetch(`/api/wikipedia?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.found) {
+      resultsDiv.innerHTML = '<p style="color:var(--text-secondary)">No Wikipedia article found.</p>';
+      return;
+    }
+    resultsDiv.innerHTML = `
+      <div style="margin-top:16px;">
+        ${data.thumbnail ? `<img src="${data.thumbnail}" style="width:100%; max-width:200px; border-radius:8px; margin-bottom:12px;" alt="">` : ""}
+        <h4 style="color:var(--text-primary); margin-bottom:8px;">${data.title}</h4>
+        <p style="color:var(--text-secondary); line-height:1.6;">${data.extract}</p>
+        <a href="${data.url}" target="_blank" style="display:inline-block; margin-top:12px; color:var(--accent, #FFD700); text-decoration:underline;">Read full article →</a>
+      </div>
+    `;
+  } catch (err) {
+    resultsDiv.innerHTML = `<p style="color:#f87171">Error: ${err.message}</p>`;
+  }
+}
+
 const ytQueryInput = document.getElementById("youtubeQueryInput");
 if (ytQueryInput) ytQueryInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") searchYoutube();
