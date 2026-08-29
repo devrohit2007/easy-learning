@@ -40,6 +40,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+require("pdf-parse/worker");
 const { PDFParse } = require("pdf-parse");
 const MAX_EXTRACTED_CHARS = 4000;
 
