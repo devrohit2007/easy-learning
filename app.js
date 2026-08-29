@@ -582,7 +582,7 @@
   async function highlightKeyTerms() {
     try {
       const terms = isDemo
-        ? ["pointer", "memory address", "variable", "dereference", "operator"]
+        ? ["thermodynamics", "entropy", "first law", "second law", "energy conservation"]
         : await AI.getKeyTerms(currentExplanationText);
       if (!terms || !terms.length) return;
       const bar = document.createElement("div");
@@ -831,8 +831,11 @@ if (ytBtn) ytBtn.addEventListener("click", () => {
   document.body.style.border = "5px solid red";
 });
 
-const ytSearchBtn = document.getElementById("ytSearchButtonV2");
-if (ytSearchBtn) ytSearchBtn.addEventListener("click", () => { document.title = "SEARCH CLICKED"; searchYoutube(); });
+document.addEventListener("click", (e) => {
+  if (e.target.id === "ytSearchButtonV2" || e.target.closest("#ytSearchButtonV2")) {
+    searchYoutube();
+  }
+});
 const ytQueryInput = document.getElementById("youtubeQueryInput");
 if (ytQueryInput) ytQueryInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") searchYoutube();
