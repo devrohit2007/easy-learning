@@ -40,9 +40,31 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+const { PDFParse } = require("pdf-parse");
+const MAX_EXTRACTED_CHARS = 4000;
+
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
+    const isPdf = file.mimetype === "application/pdf";
+
+    if (isPdf) {
+      const parser = new PDFParse({ data: file.buffer });
+      let text;
+      try {
+        const result = await parser.getText();
+        text = result.text.trim();
+      } finally {
+        await parser.destroy();
+      }
+      if (!text) throw new Error("No text found in PDF. It may be a scanned/image-based PDF.");
+      if (text.length > MAX_EXTRACTED_CHARS) {
+        text = text.slice(0, MAX_EXTRACTED_CHARS) + "\n\n[Text truncated to fit — showing first part of document]";
+      }
+      return res.json({ text });
+    }
+
+    // Images go through the vision model
     const base64 = file.buffer.toString("base64");
     const mimeType = file.mimetype;
     const r = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
@@ -51,16 +73,18 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       body: JSON.stringify({
         model: "meta/llama-3.2-11b-vision-instruct",
         messages: [{ role: "user", content: [
-          { type: "text", text: "Extract and return all the text from this image or document. Return only the text, no commentary." },
+          { type: "text", text: "Extract and return all the text from this image. Return only the text, no commentary." },
           { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } }
         ]}],
         max_tokens: 1000
       })
     });
     const raw = await r.text();
-    console.log("NVIDIA raw response:", raw.slice(0, 500));
     const d = JSON.parse(raw);
-    const text = d.choices?.[0]?.message?.content || "";
+    let text = d.choices?.[0]?.message?.content || "";
+    if (text.length > MAX_EXTRACTED_CHARS) {
+      text = text.slice(0, MAX_EXTRACTED_CHARS) + "\n\n[Text truncated to fit]";
+    }
     res.json({ text });
   } catch (err) {
     res.status(500).json({ error: err.message });
