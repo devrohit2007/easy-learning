@@ -593,12 +593,51 @@
       bar.appendChild(label);
       terms.forEach(term => {
         const chip = document.createElement("span");
-        chip.className = "key-term-chip";
+        chip.className = "key-term-chip clickable";
         chip.textContent = term;
+        chip.addEventListener("click", () => showDefinition(term));
         bar.appendChild(chip);
       });
       explanationContent.appendChild(bar);
     } catch(e) {}
+  }
+
+  const definitionCache = {};
+
+  async function showDefinition(term) {
+    const modal = document.getElementById("definitionModal");
+    const modalTerm = document.getElementById("definitionTerm");
+    const modalBody = document.getElementById("definitionBody");
+    modalTerm.textContent = term;
+    modal.classList.remove("hidden");
+
+    if (definitionCache[term]) {
+      modalBody.innerHTML = definitionCache[term];
+      return;
+    }
+
+    modalBody.innerHTML = '<div class="def-spinner"></div>';
+    try {
+      const cleanTerm = term.split(" ")[0].replace(/[^a-zA-Z]/g, "");
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanTerm}`);
+      if (!res.ok) throw new Error("not found");
+      const data = await res.json();
+      const meaning = data[0]?.meanings?.[0];
+      const definition = meaning?.definitions?.[0]?.definition;
+      const partOfSpeech = meaning?.partOfSpeech;
+      let html;
+      if (definition) {
+        html = `<p class="def-pos">${partOfSpeech || ""}</p><p>${definition}</p>`;
+      } else {
+        html = "No definition found for this term.";
+      }
+      definitionCache[term] = html;
+      modalBody.innerHTML = html;
+    } catch (e) {
+      const fallback = "This term is specific to the topic — no dictionary definition available.";
+      definitionCache[term] = fallback;
+      modalBody.textContent = fallback;
+    }
   }
 
   function mdToHtml(text) {
@@ -770,4 +809,56 @@ if (SpeechRecognition) {
   };
 } else {
   micBtn.style.display = 'none';
+}
+
+// Definition modal close
+document.getElementById("definitionCloseBtn").addEventListener("click", () => {
+  document.getElementById("definitionModal").classList.add("hidden");
+});
+document.getElementById("definitionModal").addEventListener("click", (e) => {
+  if (e.target.id === "definitionModal") {
+    document.getElementById("definitionModal").classList.add("hidden");
+  }
+});
+
+// YouTube search
+document.getElementById("youtubeBtn").addEventListener("click", () => {
+  document.getElementById("youtubeModal").classList.remove("hidden");
+});
+
+document.getElementById("youtubeSearchBtn").addEventListener("click", searchYoutube);
+document.getElementById("youtubeQueryInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") searchYoutube();
+});
+
+async function searchYoutube() {
+  const query = document.getElementById("youtubeQueryInput").value.trim();
+  const resultsDiv = document.getElementById("youtubeResults");
+  if (!query) return;
+  resultsDiv.innerHTML = '<div class="def-spinner"></div>';
+  try {
+    const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.videos || !data.videos.length) {
+      resultsDiv.innerHTML = '<p style="color:var(--text-secondary)">No videos found.</p>';
+      return;
+    }
+    resultsDiv.innerHTML = "";
+    data.videos.forEach(video => {
+      const card = document.createElement("div");
+      card.className = "yt-result-card";
+      card.innerHTML = `
+        <img class="yt-result-thumb" src="${video.thumbnail}" alt="">
+        <div class="yt-result-info">
+          <div class="yt-result-title">${video.title}</div>
+          <div class="yt-result-channel">${video.channel}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => window.open(video.url, "_blank"));
+      resultsDiv.appendChild(card);
+    });
+  } catch (err) {
+    resultsDiv.innerHTML = `<p style="color:#f87171">Error: ${err.message}</p>`;
+  }
 }

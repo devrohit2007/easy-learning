@@ -67,6 +67,31 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   }
 });
 
+app.get("/api/youtube", async (req, res) => {
+  const query = req.query.q;
+  if (!query) return res.status(400).json({ error: "Missing query" });
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=2&key=${process.env.YOUTUBE_API_KEY}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    const videos = (data.items || []).map(item => ({
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails.medium.url,
+      videoId: item.id.videoId,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`
+    }));
+    res.json({ videos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = app;
 const PORT = process.env.PORT || 3000;
-if (require.main === module) app.listen(PORT, () => console.log(`EasyLearning running on http://localhost:${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`EasyLearning running on http://0.0.0.0:${PORT}`);
+  });
+}
