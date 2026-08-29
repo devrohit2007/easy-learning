@@ -823,7 +823,8 @@ document.getElementById("definitionModal").addEventListener("click", (e) => {
 
 // YouTube search
 document.getElementById("youtubeBtn").addEventListener("click", () => {
-  document.getElementById("youtubeModal").classList.remove("hidden");
+  document.title = "CLICKED";
+  document.body.style.border = "5px solid red";
 });
 
 document.getElementById("youtubeSearchBtn").addEventListener("click", searchYoutube);
