@@ -812,23 +812,29 @@ if (SpeechRecognition) {
 }
 
 // Definition modal close
-document.getElementById("definitionCloseBtn").addEventListener("click", () => {
+const defCloseBtn = document.getElementById("definitionCloseBtn");
+if (defCloseBtn) defCloseBtn.addEventListener("click", () => {
   document.getElementById("definitionModal").classList.add("hidden");
 });
-document.getElementById("definitionModal").addEventListener("click", (e) => {
+const defModal = document.getElementById("definitionModal");
+if (defModal) defModal.addEventListener("click", (e) => {
   if (e.target.id === "definitionModal") {
     document.getElementById("definitionModal").classList.add("hidden");
   }
 });
 
 // YouTube search
-document.getElementById("youtubeBtn").addEventListener("click", () => {
-  document.title = "CLICKED";
+const ytBtn = document.getElementById("youtubeBtn");
+if (ytBtn) ytBtn.addEventListener("click", () => {
+  document.getElementById("youtubeModal").classList.remove("hidden");
+  closeDrawer();
   document.body.style.border = "5px solid red";
 });
 
-document.getElementById("youtubeSearchBtn").addEventListener("click", searchYoutube);
-document.getElementById("youtubeQueryInput").addEventListener("keydown", (e) => {
+const ytSearchBtn = document.getElementById("ytSearchButtonV2");
+if (ytSearchBtn) ytSearchBtn.addEventListener("click", () => { document.title = "SEARCH CLICKED"; searchYoutube(); });
+const ytQueryInput = document.getElementById("youtubeQueryInput");
+if (ytQueryInput) ytQueryInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") searchYoutube();
 });
 
