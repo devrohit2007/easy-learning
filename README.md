@@ -68,23 +68,22 @@ Two more integrations ground the app in the real world instead of relying purely
 git clone https://github.com/devrohit2007/easy-learning.git
 cd easy-learning
 npm install
-\`\`\`
+```
 
-
-Create a \`.env\` file with:
-\`\`\`
+Create a `.env` file with:
+```
 GEMINI_API_KEY=your_key
 NVIDIA_NEMOTRON_KEY=your_key
 NVIDIA_VISION_KEY=your_key
 FEATHERLESS_API_KEY=your_key
 YOUTUBE_API_KEY=your_key
-\`\`\`
+```
 
-\`\`\`bash
+```bash
 node server.js
-\`\`\`
+```
 
-Visit \`http://localhost:3000\`
+Visit `http://localhost:3000`
 
 ---
 
