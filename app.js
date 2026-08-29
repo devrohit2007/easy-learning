@@ -619,23 +619,20 @@
 
     modalBody.innerHTML = '<div class="def-spinner"></div>';
     try {
-      const cleanTerm = term.split(" ")[0].replace(/[^a-zA-Z]/g, "");
-      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanTerm}`);
-      if (!res.ok) throw new Error("not found");
+      const materialEl = document.getElementById("materialInput");
+      const context = (materialEl && materialEl.value) ? materialEl.value.slice(0, 200) : "";
+      const res = await fetch("/api/define", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term, context })
+      });
       const data = await res.json();
-      const meaning = data[0]?.meanings?.[0];
-      const definition = meaning?.definitions?.[0]?.definition;
-      const partOfSpeech = meaning?.partOfSpeech;
-      let html;
-      if (definition) {
-        html = `<p class="def-pos">${partOfSpeech || ""}</p><p>${definition}</p>`;
-      } else {
-        html = "No definition found for this term.";
-      }
+      if (data.error) throw new Error(data.error);
+      const html = `<p>${data.definition}</p>`;
       definitionCache[term] = html;
       modalBody.innerHTML = html;
     } catch (e) {
-      const fallback = "This term is specific to the topic — no dictionary definition available.";
+      const fallback = "Couldn't fetch a definition for this term right now.";
       definitionCache[term] = fallback;
       modalBody.textContent = fallback;
     }

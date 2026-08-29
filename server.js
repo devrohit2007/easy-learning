@@ -88,6 +88,35 @@ app.get("/api/youtube", async (req, res) => {
   }
 });
 
+app.post("/api/define", async (req, res) => {
+  const { term, context } = req.body;
+  if (!term) return res.status(400).json({ error: "Missing term" });
+  try {
+    const r = await fetch("https://api.featherless.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.FEATHERLESS_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "Qwen/Qwen3.8-27B",
+        messages: [{
+          role: "user",
+          content: `Define the term "${term}" in one or two short sentences, in the context of: ${context || "general learning"}. Be concise and clear. Return only the definition, no extra text.`
+        }],
+        max_tokens: 150,
+        temperature: 0.3
+      })
+    });
+    const data = await r.json();
+    const definition = data.choices?.[0]?.message?.content?.trim();
+    if (!definition) throw new Error("No definition returned");
+    res.json({ definition });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = app;
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
