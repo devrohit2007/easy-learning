@@ -331,6 +331,7 @@
   retryBtn.addEventListener('click', () => { if (currentMode) startExplanation(currentMode); });
 
   document.querySelectorAll('.rethink-btn').forEach(btn => {
+    if (btn.dataset.mode === '__none__') return;
     btn.addEventListener('click', () => { stopSpeech(); startExplanation(btn.dataset.mode); });
   });
 
@@ -823,12 +824,23 @@ if (defModal) defModal.addEventListener("click", (e) => {
   }
 });
 
+// Watch videos button (contextual, uses current material as topic)
+document.addEventListener("click", (e) => {
+  if (e.target.id === "watchVideosBtn" || e.target.closest("#watchVideosBtn")) {
+    const materialEl = document.getElementById("materialInput");
+    const materialText = (materialEl && materialEl.value) ? materialEl.value : document.title.replace(" — Workspace", "");
+    const topic = materialText.split(".")[0].split(",")[0].slice(0, 60).trim();
+    document.getElementById("youtubeQueryInput").value = topic;
+    document.getElementById("youtubeModal").classList.remove("hidden");
+    searchYoutube();
+  }
+});
+
 // YouTube search
 const ytBtn = document.getElementById("youtubeBtn");
 if (ytBtn) ytBtn.addEventListener("click", () => {
   document.getElementById("youtubeModal").classList.remove("hidden");
   closeDrawer();
-  document.body.style.border = "5px solid red";
 });
 
 document.addEventListener("click", (e) => {
