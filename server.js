@@ -40,6 +40,78 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+app.post("/api/explain-stream", async (req, res) => {
+  const { messages, mode } = req.body;
+  const useGemini = ["simple", "analogy"].includes(mode);
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  try {
+    if (useGemini) {
+      const contents = messages.filter(m => m.role !== "system").map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents })
+      });
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const json = JSON.parse(line.slice(6));
+            const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+          } catch (e) {}
+        }
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } else {
+      const r = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.NVIDIA_NEMOTRON_KEY}` },
+        body: JSON.stringify({ model: "nvidia/nemotron-3-ultra-550b-a55b", messages, max_tokens: 800, temperature: 0.7, stream: true })
+      });
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6);
+          if (payload === "[DONE]") continue;
+          try {
+            const json = JSON.parse(payload);
+            const text = json.choices?.[0]?.delta?.content;
+            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+          } catch (e) {}
+        }
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    }
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 require("pdf-parse/worker");
 const { PDFParse } = require("pdf-parse");
 const MAX_EXTRACTED_CHARS = 4000;

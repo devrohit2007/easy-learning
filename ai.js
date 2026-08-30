@@ -50,6 +50,54 @@ Rules:
     return await callAPI(prompt(text) + diffNote + langNote, mode);
   }
 
+  async function explainStream(text, mode, lang = "English", diff = "normal", onChunk) {
+    const prompt = MODE_PROMPTS[mode];
+    if (!prompt) throw new Error('Unknown mode: ' + mode);
+    const diffNote = diff === "kid" ? "\n\nAudience: Explain like the person is 10 years old. Use very simple words and fun examples." : diff === "expert" ? "\n\nAudience: The person is an expert. Use technical terms, be precise, skip basic explanations." : "";
+    const langNote = lang !== "English" ? `\n\nIMPORTANT: Respond entirely in ${lang}. Do not use English except for technical terms that have no translation.` : "";
+    const fullPrompt = prompt(text) + diffNote + langNote;
+
+    const response = await fetch('/api/explain-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: fullPrompt }
+        ]
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const json = JSON.parse(line.slice(6));
+          if (json.error) throw new Error(json.error);
+          if (json.done) continue;
+          if (json.text) {
+            fullText += json.text;
+            onChunk(json.text, fullText);
+          }
+        } catch (e) {
+          if (e.message && !e.message.includes("JSON")) throw e;
+        }
+      }
+    }
+    return fullText;
+  }
+
   async function generatePractice(text, mode, lang = "English") {
     const langNote = lang !== "English" ? `\n\nIMPORTANT: Write the questions, options, and explanations entirely in ${lang}.` : "";
     const raw = await callAPI(PRACTICE_PROMPT(text) + langNote, mode);
@@ -94,6 +142,6 @@ Score their explanation out of 10. Return ONLY a JSON object, no markdown:
     return JSON.parse(match[0]);
   }
 
-  return { explain, generatePractice, generateQuiz, getKeyTerms, evaluateTeachBack };
+  return { explain, explainStream, generatePractice, generateQuiz, getKeyTerms, evaluateTeachBack };
 
 })();

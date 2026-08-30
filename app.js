@@ -229,8 +229,21 @@
         renderExplanation(DEMO_EXPLANATIONS[currentLang][mode], mode);
       } else {
         loadingText.textContent = 'Understanding your material...';
-        const raw = await AI.explain(currentMaterial, mode, currentLang, currentDiff);
-        renderAIExplanation(raw, mode);
+        let firstChunkArrived = false;
+        const streamDiv = document.createElement('div');
+        streamDiv.className = 'ai-stream-text';
+        const fullText = await AI.explainStream(currentMaterial, mode, currentLang, currentDiff, (chunk, soFar) => {
+          if (!firstChunkArrived) {
+            firstChunkArrived = true;
+            loadingState.classList.add('hidden');
+            explanationOutput.classList.remove('hidden');
+            explanationContent.appendChild(streamDiv);
+          }
+          streamDiv.textContent = soFar;
+        });
+        explanationContent.innerHTML = '';
+        renderAIExplanation(fullText, mode);
+        prefetchPractice();
       }
     } catch (err) {
       showError(err);
@@ -385,6 +398,13 @@
   }
 
   // Step 4: Practice
+  let prefetchedPracticePromise = null;
+
+  function prefetchPractice() {
+    if (isDemo) return;
+    prefetchedPracticePromise = AI.generatePractice(currentMaterial, currentMode, currentLang).catch(() => null);
+  }
+
   practiceBtn.addEventListener('click', async () => {
     stopSpeech();
     showSection(practiceSection);
@@ -400,9 +420,14 @@
       if (isDemo) {
         await delay(800);
         practiceData = DEMO_PRACTICE[currentLang];
+      } else if (prefetchedPracticePromise) {
+        const prefetched = await prefetchedPracticePromise;
+        practiceData = prefetched || await AI.generatePractice(currentMaterial, currentMode, currentLang);
+        prefetchedPracticePromise = null;
       } else {
         practiceData = await AI.generatePractice(currentMaterial, currentMode, currentLang);
       }
+      prefetchQuiz();
       renderQuestions(practiceData, practiceQuestions, practiceAnswers, () => {
         const ready = practiceAnswers.every(a => a !== null);
         checkAnswersBtn.disabled = !ready;
@@ -443,6 +468,13 @@
     quizAnswers = [];
   });
 
+  let prefetchedQuizPromise = null;
+
+  function prefetchQuiz() {
+    if (isDemo) return;
+    prefetchedQuizPromise = AI.generateQuiz(currentMaterial, currentMode, currentLang).catch(() => null);
+  }
+
   startQuizBtn.addEventListener('click', async () => {
     quizIntro.classList.add('hidden');
     quizLoading.classList.remove('hidden');
@@ -450,6 +482,10 @@
       if (isDemo) {
         await delay(900);
         quizData = DEMO_QUIZ[currentLang];
+      } else if (prefetchedQuizPromise) {
+        const prefetched = await prefetchedQuizPromise;
+        quizData = prefetched || await AI.generateQuiz(currentMaterial, currentMode, currentLang);
+        prefetchedQuizPromise = null;
       } else {
         quizData = await AI.generateQuiz(currentMaterial, currentMode, currentLang);
       }
