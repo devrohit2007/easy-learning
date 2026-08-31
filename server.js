@@ -188,29 +188,51 @@ app.get("/api/youtube", async (req, res) => {
 app.post("/api/define", async (req, res) => {
   const { term, context } = req.body;
   if (!term) return res.status(400).json({ error: "Missing term" });
+  const prompt = `Define the term "${term}" in one or two short sentences, in the context of: ${context || "general learning"}. Be concise and clear. Return only the definition, no extra text.`;
+
   try {
-    const r = await fetch("https://api.featherless.ai/v1/chat/completions", {
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.FEATHERLESS_API_KEY}`
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "Qwen/Qwen3.8-27B",
-        messages: [{
-          role: "user",
-          content: `Define the term "${term}" in one or two short sentences, in the context of: ${context || "general learning"}. Be concise and clear. Return only the definition, no extra text.`
-        }],
-        max_tokens: 150,
-        temperature: 0.3
+        model: "openai/gpt-oss-20b",
+        messages: [{ role: "user", content: prompt }],
+        max_completion_tokens: 250,
+        temperature: 0.5,
+        include_reasoning: false
       })
     });
     const data = await r.json();
     const definition = data.choices?.[0]?.message?.content?.trim();
-    if (!definition) throw new Error("No definition returned");
-    res.json({ definition });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!definition) throw new Error("No definition from Groq. Raw: " + JSON.stringify(data).slice(0, 200));
+    return res.json({ definition });
+  } catch (groqErr) {
+    console.log("Groq FAILED, falling back:", groqErr.message);
+    // Fallback to Featherless/Qwen if Groq fails
+    try {
+      const r2 = await fetch("https://api.featherless.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.FEATHERLESS_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "Qwen/Qwen3.8-27B",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 150,
+          temperature: 0.3
+        })
+      });
+      const data2 = await r2.json();
+      const definition2 = data2.choices?.[0]?.message?.content?.trim();
+      if (!definition2) throw new Error("No definition returned");
+      res.json({ definition: definition2 });
+    } catch (fallbackErr) {
+      res.status(500).json({ error: fallbackErr.message });
+    }
   }
 });
 
